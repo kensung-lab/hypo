@@ -1,0 +1,6 @@
+[submodule "external/slog"]
+	path = external/slog
+	url = https://github.com/Ritu-Kundu/slog.git
+[submodule "external/suk"]
+	path = external/suk
+	url = https://github.com/Ritu-Kundu/suk.git

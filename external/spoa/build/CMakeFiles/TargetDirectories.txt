@@ -1,0 +1,7 @@
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/install.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/list_install_components.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/rebuild_cache.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/spoa.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/install/strip.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/install/local.dir
+/home/ritu/consensus_semiglobal/vendor/spoa/build/CMakeFiles/edit_cache.dir
