@@ -1,0 +1,9 @@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: Suk
+Description: Suk is a C++ implementation to find solid Unique Kmers from genomic reads data
+Version: @suk_VERSION@
+
+Libs: -L${libdir} -lsuk
+Cflags: -I${includedir}

@@ -1,0 +1,2 @@
+../sample/SRR1770413_1.fastq
+../sample/SRR1770413_2.fastq
