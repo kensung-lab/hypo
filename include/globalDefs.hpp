@@ -115,34 +115,45 @@ namespace hypo{
   #define INSPECTFILEPREF "aux/inspect_"
   #define BEDFILE "aux/regions.bed"
 
-  // VArious settings
-  #define SR_COV_TH 5u
-  #define SR_SUPP_FRAC 0.4
-  //#define SR_SUPP_FRAC 0.8
+  // SR related settings
+  using SRSettings = struct SSRSettings{
+    UINT cov_th;
+    double supp_frac;
+  };
+  extern const SRSettings Sr_settings;
+    
   // Minimiser based window cutting thresholds/constants
-  #define MINIMIZER_K 10u // Change Poly-base macros, if this k gets changed.
-  #define MINIMIZER_W 10u
-  #define MINIMISER_COV_TH 5u
-  #define MINIMISER_SUPP_FRAC 0.8
-  #define IDEAL_WIND_SIZE 100u
-  #define WIND_SIZE_SEARCH_TH 80u //This should always be <= ideal_wind_size
-  #define POLYA 0x000000u
-  #define POLYC 0x055555u
-  #define POLYG 0x0aaaaau
-  #define POLYT 0x0fffffu
+  using MinimizerSettings = struct SMinimizerSettings{
+    UINT k; // Change Poly-base macros, if this k gets changed.
+    UINT w;
+    UINT cov_th;
+    double supp_frac;
+    UINT polyA;
+    UINT polyC;
+    UINT polyG;
+    UINT polyT;
+  };
+  extern const MinimizerSettings Minimizer_settings;
+    
+  // Window-size related settings (set according to param)
+  using WindowSettings = struct SWindowSettings{
+    UINT ideal_swind_size;  // Ideal short window size
+    UINT ideal_lwind_size;  // Ideal long window size
+    UINT wind_size_search_th; //This should always be <= ideal_wind_size
+  };
+  extern WindowSettings Window_settings;
 
-  //#define IDEAL_WIND_SIZE 140u
-  #define IDEAL_LWIND_SIZE 500u // Ideal long window size
-  //#define WIND_SIZE_SEARCH_TH 120u //This should always be <= ideal_wind_size
-  #define MIN_SHORT_NUM 3 // Minimum num of short-reads arms for a window to be declared short  
-  #define MIN_INTERNAL_NUM1 20u // Minimum num of internal arms for a short-arms window to discard pref/suff arms
-  #define MIN_INTERNAL_NUM2 5u // Minimum num of internal arms for a spcl (SW,WS,SWS) short-arms window to discard pref/suff arms
-  #define MIN_INTERNAL_NUM3 10u // Minimum num of internal arms for a long-arms window to discard pref/suff arms
-  #define MIN_CONTRIB 10u // Minimum num of arms for a short-arms window to be considered for discarding pref/suff arms
-  #define MIN_INTERNAL_CONTRIB 0.4 // Minimum fraction of internal arms (wrt total arms) for a short-arms window to discard pref/suff arms
-  #define SHORT_ARM_COEF 10 // Short arm len should be >= window_len/coeffcient
-
-
+  // Arm-filling realted settings
+  using ArmsSettings = struct SArmsSettings{
+    UINT min_short_num; // Minimum num of short-reads arms for a window to be declared short
+    UINT min_internal_num1; // Minimum num of internal arms for a short-arms window to discard pref/suff arms
+    UINT min_internal_num2; // Minimum num of internal arms for a spcl (SW,WS,SWS) short-arms window to discard pref/suff arms
+    UINT min_internal_num3; // Minimum num of internal arms for a long-arms window to discard pref/suff arms
+    UINT min_contrib; // Minimum num of arms for a short-arms window to be considered for discarding pref/suff arms
+    double min_internal_contrib; // Minimum fraction of internal arms (wrt total arms) for a short-arms window to discard pref/suff arms
+    UINT short_arm_coef; // Short arm len should be >= window_len/coefficient
+  };
+  extern const ArmsSettings Arms_settings;
 
   const std::vector<char> cCode = {'A','C','G','T','N'};
 // A: 0, C: 1, G:2, T: 3; everything else is 4.

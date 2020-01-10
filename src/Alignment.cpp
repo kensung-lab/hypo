@@ -120,6 +120,8 @@ void Alignment::update_solidkmers_support (const UINT k, Contig& contig) {
 }
 
 void Alignment::update_minimisers_support (Contig& contig) {
+    UINT MINIMIZER_K = Minimizer_settings.k;
+    UINT MINIMIZER_W = Minimizer_settings.w;
     /* Find starting and ending region */
     // Rank(i) returns number of set nits in [0, i). Therefore look for _rb+1 so that index of starting region can be deduced by subtracting 1.
     auto first = contig._RMreg_pos(_rb+1)-1;
@@ -395,11 +397,11 @@ void Alignment::prepare_short_arm(const UINT k, const UINT32 windex, const UINT3
     //std:: cout << "wind: qb: qe : " << windex << " " << qb << " " << qe <<" "<<std::endl;
     
     // Ignore if the arm is too short as compared to window
-    auto mk = MINIMIZER_K;
+    auto mk = Minimizer_settings.k;
     auto curr_pos = contig._Sreg_pos(windex+1);
     auto next_pos = contig._Sreg_pos(windex+2);
     
-    if ((next_pos-curr_pos) > (SHORT_ARM_COEF*(qe-qb))) {return;}
+    if ((next_pos-curr_pos) > (Arms_settings.short_arm_coef*(qe-qb))) {return;}
     RegionType wtype = contig._reg_type[windex];
     bool valid = true;
     auto q_beg = qb;

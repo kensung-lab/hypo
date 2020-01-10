@@ -25,11 +25,9 @@
 #include <cctype>
 #include <math.h> 
 #include <algorithm>
-#include <filesystem>
-namespace fs = std::filesystem;
+#include <sys/stat.h>
 
 #include "globalDefs.hpp"
-
 #include "Hypo.hpp"
 
 
@@ -42,7 +40,8 @@ void decodeFlags(int argc, char* argv [], InputFlags& flags);
 std::vector<std::string> split(const std::string &str, char delimiter);
 void print_byte_to_strings(int nb);
 UINT get_kmer_len(const std::string& arg);
-UINT16 get_expected_file_sz(const std::string& given_size, UINT16 cov);  
+UINT16 get_expected_file_sz(const std::string& given_size, UINT16 cov);
+void set_kind(const std::string& kind);
 
 static struct option long_options[] = {
     {"reads-short", required_argument, NULL, 'r'},
@@ -54,6 +53,7 @@ static struct option long_options[] = {
     {"output", required_argument, NULL, 'o'},
     {"threads", required_argument, NULL, 't'},
     {"processing-size", required_argument, NULL, 'p'},
+    {"kind-sr", required_argument, NULL, 'k'},
     {"match-sr", required_argument, NULL, 'm'},
     {"mismatch-sr", required_argument, NULL, 'x'},
     {"gap-sr", required_argument, NULL, 'g'},
@@ -66,6 +66,28 @@ static struct option long_options[] = {
     {"help", no_argument, NULL, 'h'},
     {NULL, 0, NULL, 0}};
 
+inline bool file_exists (const std::string& name) {
+  struct stat st;   
+  return (stat (name.c_str(), &st) == 0); 
+}
+
+inline bool create_dir (const std::string& name) {
+  struct stat st; 
+  int status = 0;  
+  if (stat(name.c_str(), &st) == -1) {
+    status = mkdir(name.c_str(), 0777);
+  }
+  return (status==0);
+}
+
+/** Define various settings as globals
+  */
+const SRSettings Sr_settings = {5u,0.4};
+const MinimizerSettings Minimizer_settings = {10u,10u,5u,0.8,0x000000u,0x055555u,0x0aaaaau,0x0fffffu};
+WindowSettings Window_settings = {100u,500u,80u};
+const ArmsSettings Arms_settings = {3u,20u,5u,10u,10u,0.4,10u};
+
+
 /** Decode the input flags
    */
 void decodeFlags(int argc, char *argv[], InputFlags &flags)
@@ -74,8 +96,8 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
   int opt;
   std::string infile;
 
+  std::string kind="sr";
   flags.lr_bam_filename = "";
-
   flags.score_params.sr_match_score = 5;
   flags.score_params.sr_misMatch_score = -4;
   flags.score_params.sr_gap_penalty = -8;
@@ -99,7 +121,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
   std::string cmd = "hypo ";
   std::string err_string = "";
   /* initialisation */
-  while ((opt = getopt_long(argc, argv, "r:d:s:c:b:B:o:t:p:m:x:g:M:X:G:q:n:ih", long_options,
+  while ((opt = getopt_long(argc, argv, "r:d:s:c:b:B:o:t:p:k:m:x:g:M:X:G:q:n:ih", long_options,
                             nullptr)) != -1)
   {
     switch (opt)
@@ -117,7 +139,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
           while(std::getline(sr_list,name)) {
             if (name.size()>0) {
               flags.sr_filenames.push_back(name);
-              if (!fs::exists(name)) {
+              if (!file_exists(name)) {
                 fprintf(stderr, "[Hypo::utils] Error: File Error: Reads file does not exist %s!\n",name.c_str());
                 exit(1);
               }
@@ -126,7 +148,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
       }
       else {
           flags.sr_filenames.push_back(infile);
-          if (!fs::exists(infile)) {
+          if (!file_exists(infile)) {
             fprintf(stderr, "[Hypo::utils] Error: File Error: Reads file does not exist %s!\n",infile.c_str());
             exit(1);
           }
@@ -137,7 +159,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
     
     case 'd':
       flags.draft_filename = std::string(optarg);
-      if (!fs::exists(flags.draft_filename)) {
+      if (!file_exists(flags.draft_filename)) {
         fprintf(stderr, "[Hypo::utils] Error: File Error: Draft file does not exist %s!\n",flags.draft_filename.c_str());
         exit(1);
       }
@@ -167,7 +189,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
 
     case 'b':
       flags.sr_bam_filename = std::string(optarg);
-      if (!fs::exists(flags.sr_bam_filename)) {
+      if (!file_exists(flags.sr_bam_filename)) {
         fprintf(stderr, "[Hypo::utils] Error: File Error: Short reads BAM file does not exist %s!\n",flags.sr_bam_filename.c_str());
         exit(1);
       }
@@ -178,7 +200,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
 
     case 'B':
       flags.lr_bam_filename = std::string(optarg);
-      if (!fs::exists(flags.sr_bam_filename)) {
+      if (!file_exists(flags.sr_bam_filename)) {
         fprintf(stderr, "[Hypo::utils] Error: File Error: Long reads BAM file does not exist %s!\n",flags.lr_bam_filename.c_str());
         exit(1);
       }
@@ -189,6 +211,12 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
     case 'o':
       flags.output_filename = std::string(optarg);
       cmd += (" -o " + std::string(optarg));
+      args++;
+      break;
+
+    case 'k':
+      kind = std::string(optarg);
+      cmd += (" -k " + kind);
       args++;
       break;
 
@@ -280,6 +308,8 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
   
   if (is_sr && is_draft && is_size && is_bamsr && is_cov)
   {
+    // Set window settings
+    void set_kind(const std::string& kind);
     // Set expected short reads file size
     flags.sz_in_gb = get_expected_file_sz(given_sz,flags.cov);
 
@@ -293,9 +323,9 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
     }
     fprintf(stdout, "Given Command: %s.\n",cmd.c_str()); 
     // Set stage to start from  
-      fs::create_directory(AUX_DIR);
+    create_dir(AUX_DIR);
     if (flags.intermed) {  
-      if (fs::exists(STAGEFILE)) {
+      if (file_exists(STAGEFILE)) {
         std::ifstream ifs(STAGEFILE);
         if (!ifs.is_open()) {
           fprintf(stderr, "[Hypo::Utils] Error: File open error: Stage File (%s) exists but could not be opened!\n",STAGEFILE);
@@ -361,6 +391,12 @@ void usage(void)
   std::cout << "\t-p, --processing-size <int>\n"
             << "\tNumber of contigs to be processed in one batch. Lower value means less memory usage but slower speed. \n"
             << "\t[Default] All the contigs in the draft.\n\n ";
+  std::cout << "\t-k, --kind-sr <str>\n"
+            << "\tKind of the short reads. \n"
+            << "\t[Valid Values] \n"
+            << "\t\tsr\t(Corresponding to NGS reads like Illumina reads) \n"
+            << "\t\tccs\t(Corresponding to HiFi reads like PacBio CCS reads) \n"
+            << "\t[Default] sr.\n\n ";
 
   std::cout << "\t-m, --match-sr <int>\n"
             << "\tScore for matching bases for short reads. \n"
@@ -529,8 +565,23 @@ UINT16 get_expected_file_sz(const std::string& given_size, UINT16 cov) {
   }
   if (sz_in_gb < 12) {sz_in_gb=12;}
   else if (sz_in_gb > 1024) {sz_in_gb=1024;}
-  fprintf(stdout, "[Hypo::Utils] Info: File size expected for the given genome size (%s) and cov (%u): %uG\n",given_size.c_str(),cov,sz_in_gb); 
+  fprintf(stdout, "[Hypo::Utils] Info: File size expected for the given genome size (%s) and cov (%u): %luG\n",given_size.c_str(),cov,sz_in_gb); 
   return UINT16(sz_in_gb);
+}
+
+void set_kind(const std::string& kind) {
+  if (kind == "sr") {
+    Window_settings.ideal_swind_size = 100;
+    Window_settings.wind_size_search_th = 80;
+  }
+  else if (kind == "ccs") {
+    Window_settings.ideal_swind_size = 500;
+    Window_settings.wind_size_search_th = 400;
+  }
+  else {
+    fprintf(stderr, "[Hypo::Utils] Error: Wrong value for kind-sr: Allowed values are <sr>, <ccs>!\n");
+    exit(1);
+  }
 }
 
 

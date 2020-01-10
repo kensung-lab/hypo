@@ -94,7 +94,7 @@ bool SolidKmers::initialise(const std::vector<std::string> & filenames, const UI
     char read[2];
     gzgets(fp, read, 2);
     if(read[0] == '>') {
-        file_type = "-fa";
+        file_type = "-fm";
     } else if(read[0] != '@'){
         fprintf(stderr, "[SUK::] Cannot identify filetype. Assuming FASTQ for KMC input.\n");
     }

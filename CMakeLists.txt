@@ -6,7 +6,7 @@ include(GNUInstallDirs)
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("Debug mode")
+    message("Debug mode")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3 -march=native")
@@ -54,11 +54,8 @@ find_package(ZLIB REQUIRED)
 
 # Install External libs
 
-set(htslib_root ${PROJECT_SOURCE_DIR}/external/install/htslib)
-set(htslib_static_dir ${htslib_root}/lib)
-find_library(HTSFOUND hts PATHS ${htslib_static_dir})
-if (NOT HTSFOUND)
-    message(STATUS "   Assuming htslib version 110 or higher is installed.")
+if(CMAKE_BUILD_TYPE MATCHES Conda)
+    message("Conda mode")
     find_library(HTS hts)
     find_path(HTSLIB_INCLUDE_DIR NAMES htslib/kseq.h HINTS "${HTSLIB_INSTALL_DIR}")
     if (HTS AND HTSLIB_INCLUDE_DIR)
@@ -66,16 +63,47 @@ if (NOT HTSFOUND)
         include_directories(${HTSLIB_INCLUDE_DIR})
         link_directories(${HTS})
     else()
-        message(FATAL_ERROR "   htslib NOT found (locally or globally). Please run install_deps.sh provided in the hypo folder.")
-    endif() 
+        message(FATAL_ERROR "   htslib NOT found (in Conda environment). Please try buiding from the source.")
+    endif()
+    
+    find_library(SDSL sdsl)
+    find_path(SDSLLIB_INCLUDE_DIR NAMES sdsl/bit_vectors.hpp HINTS "${SDSLLIB_INSTALL_DIR}")
+    if (SDSL AND SDSLLIB_INCLUDE_DIR)
+        message(STATUS "  sdsllib and headers found: ${SDSL} and ${SDSLLIB_INCLUDE_DIR}")
+        include_directories(${HTSLIB_INCLUDE_DIR})
+        link_directories(${HTS})
+    else()
+        message(FATAL_ERROR "   sdsllib NOT found (in Conda environment). Please try buiding from the source.")
+    endif()
 else()
-    message(STATUS "   Local htslib is being used.")
-    add_library(htslib UNKNOWN IMPORTED) # or STATIC instead of SHARED
-    set_target_properties(htslib PROPERTIES
-        IMPORTED_LOCATION "${htslib_static_dir}/libhts.so"
-        INTERFACE_INCLUDE_DIRECTORIES "${htslib_root}/include"
-    )
-    set(HTS htslib)
+    message("Installing from Source")
+    set(htslib_root ${PROJECT_SOURCE_DIR}/external/install/htslib)
+    set(htslib_static_dir ${htslib_root}/lib)
+    find_library(HTSFOUND hts PATHS ${htslib_static_dir})
+    if (NOT HTSFOUND)
+        message(STATUS "   Assuming htslib version 1.10 or higher is installed.")
+        find_library(HTS hts)
+        find_path(HTSLIB_INCLUDE_DIR NAMES htslib/kseq.h HINTS "${HTSLIB_INSTALL_DIR}")
+        if (HTS AND HTSLIB_INCLUDE_DIR)
+            message(STATUS "   htslib and headers found: ${HTS} and ${HTSLIB_INCLUDE_DIR}")
+            include_directories(${HTSLIB_INCLUDE_DIR})
+            link_directories(${HTS})
+        else()
+            message(FATAL_ERROR "   htslib NOT found (locally or globally). Please run install_deps.sh provided in the hypo folder.")
+        endif() 
+    else()
+        message(STATUS "   Local htslib is being used.")
+        add_library(htslib UNKNOWN IMPORTED) # or STATIC instead of SHARED
+        set_target_properties(htslib PROPERTIES
+            IMPORTED_LOCATION "${htslib_static_dir}/libhts.so"
+            INTERFACE_INCLUDE_DIRECTORIES "${htslib_root}/include"
+        )   
+        set(HTS htslib)
+    endif()
+
+    if (NOT TARGET sdsl)
+        add_subdirectory(external/sdsl-lite EXCLUDE_FROM_ALL)    
+    endif()
 endif()
 
 if (NOT TARGET spoa)
@@ -88,12 +116,10 @@ endif()
 if (NOT TARGET slog)
     add_subdirectory(external/slog EXCLUDE_FROM_ALL)
 endif() 
-if (NOT TARGET sdsl)
-    add_subdirectory(external/sdsl-lite EXCLUDE_FROM_ALL)    
-endif()
 
-# This maybe needed for filesystem: target_link_libraries(hypo PRIVATE "stdc++fs")
-target_link_libraries(hypo PRIVATE spoa pthread sdsl suk slog ${ZLIB_LIBRARIES} ${HTS} OpenMP::OpenMP_CXX "stdc++fs")
+# This maybe needed for filesystem: target_link_libraries
+#target_link_libraries(hypo PRIVATE spoa pthread sdsl suk slog ${ZLIB_LIBRARIES} ${HTS} OpenMP::OpenMP_CXX "stdc++fs")
+target_link_libraries(hypo PRIVATE spoa pthread sdsl suk slog ${ZLIB_LIBRARIES} ${HTS} OpenMP::OpenMP_CXX)
 install(TARGETS hypo DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 

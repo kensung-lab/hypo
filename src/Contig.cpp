@@ -95,8 +95,8 @@ namespace hypo
             if (_solid_pos[pos]==1) { // kmer
                 // Check if valid                
                 bool is_valid =false;
-                if (_kmerinfo[i]->coverage >=SR_COV_TH) {
-                    UINT supp_th = UINT(SR_SUPP_FRAC*_kmerinfo[i]->coverage);
+                if (_kmerinfo[i]->coverage >=Sr_settings.cov_th) {
+                    UINT supp_th = UINT(Sr_settings.supp_frac * _kmerinfo[i]->coverage);
                     if  (_kmerinfo[i]->support >= (2*supp_th)) { // this kmer has >=80% support; ; supported by one haplotypes
                         is_valid = true;
                         pvs_80 = true;
@@ -163,7 +163,7 @@ namespace hypo
         if (_is_win_even) {
             _minimserinfo.emplace_back(std::make_unique<MWMinimiserInfo>());
             UINT32 mw_len = sr_pos[0];
-            if (mw_len>IDEAL_WIND_SIZE) {
+            if (mw_len>Window_settings.ideal_swind_size) {
                 initialise_minimserinfo(_pseq.unpack(0,sr_pos[0]), 0);
             }
             ++windex;         
@@ -175,7 +175,7 @@ namespace hypo
             _minimserinfo.emplace_back(std::make_unique<MWMinimiserInfo>());
             UINT32 mw_len = sr_pos[ind+1]-mw_start;
             std::string draft_seq ();
-            if (mw_len>IDEAL_WIND_SIZE) {
+            if (mw_len>Window_settings.ideal_swind_size) {
                 initialise_minimserinfo(_pseq.unpack(mw_start,sr_pos[ind+1]), windex);
             } 
         }
@@ -264,10 +264,10 @@ namespace hypo
             if (_reg_type[i] !=  RegionType::SR && _reg_type[i] !=  RegionType::MSR && _pwindows[i]) { // a window with short arms  
                 bool is_discarded = false;
                 UINT64 internal_contrib = _pwindows[i]->get_num_internal();
-                if (internal_contrib < MIN_SHORT_NUM) { // not suffcient internal arms; empty is also an internal
+                if (internal_contrib < Arms_settings.min_short_num) { // not suffcient internal arms; empty is also an internal
                     UINT32 win_len = _Sreg_pos(i+2)-_Sreg_pos(i+1); // works because last is dummy SR
                     bool is_covered = ((_pwindows[i]->get_maxlen_pre()) +(_pwindows[i]->get_maxlen_suf()) >= win_len);
-                    bool suffcient_pre_suff = ((_pwindows[i]->get_num_pre() >= MIN_SHORT_NUM) && (_pwindows[i]->get_num_suf() >= MIN_SHORT_NUM));
+                    bool suffcient_pre_suff = ((_pwindows[i]->get_num_pre() >= Arms_settings.min_short_num) && (_pwindows[i]->get_num_suf() >= Arms_settings.min_short_num));
                     if (!(is_covered && suffcient_pre_suff)) { // discard this window
                         _pwindows[i].reset();
                         is_discarded = true;
@@ -276,9 +276,9 @@ namespace hypo
                 
                 if (!is_discarded) { // Use only internal arms wherever possible; free some space                    
                     UINT64 contrib = _pwindows[i]->get_num_total(); 
-                    bool cond0 = internal_contrib > MIN_INTERNAL_NUM1;
-                    bool cond1 = contrib >=MIN_CONTRIB && (internal_contrib >= std::floor(MIN_INTERNAL_CONTRIB*contrib));
-                    bool cond2 = (_reg_type[i]==RegionType::SWS || _reg_type[i]==RegionType::SW || _reg_type[i]==RegionType::WS || _reg_type[i]==RegionType::MWS || _reg_type[i]==RegionType::SWM) && (internal_contrib >= MIN_INTERNAL_NUM2);
+                    bool cond0 = internal_contrib > Arms_settings.min_internal_num1;
+                    bool cond1 = contrib >=Arms_settings.min_contrib && (internal_contrib >= std::floor(Arms_settings.min_internal_contrib*contrib));
+                    bool cond2 = (_reg_type[i]==RegionType::SWS || _reg_type[i]==RegionType::SW || _reg_type[i]==RegionType::WS || _reg_type[i]==RegionType::MWS || _reg_type[i]==RegionType::SWM) && (internal_contrib >= Arms_settings.min_internal_num2);
                     if (cond0 || cond1 || cond2) { // get rid of pre/suf arms
                         _pwindows[i]->clear_pre_suf();
                     }
@@ -313,7 +313,7 @@ namespace hypo
             }
             else { // a window with no short arms
                 UINT32 winlen = _Sreg_pos(i+2)-pos;
-                if ((pos==0) || (curr_pseudowin_len+winlen>IDEAL_LWIND_SIZE) || (!pvs_iswin) ) { // start new pwin : winsize exceeds or win after SR 
+                if ((pos==0) || (curr_pseudowin_len+winlen>Window_settings.ideal_lwind_size) || (!pvs_iswin) ) { // start new pwin : winsize exceeds or win after SR 
                     _pseudo_reg_pos[pos]=1;
                     _pseudo_reg_type.emplace_back(RegionType::LONG);
                     _true_reg_id.emplace_back(i);
@@ -454,8 +454,9 @@ namespace hypo
     void Contig::initialise_minimserinfo(const std::string& draft_seq, UINT32 minfoind) {
     
         UINT32 last_found_position = draft_seq.size() + 1; //a unique identifier for 'first minimizer'
-        
-        UINT32 shift = 2 * (MINIMIZER_K - 1);
+        UINT32 MINIMIZER_K = Minimizer_settings.k;
+        UINT32 MINIMIZER_W = Minimizer_settings.w;
+        UINT32 shift = 2 * (Minimizer_settings.k - 1);
         UINT32 mask = (1ULL<<2*MINIMIZER_K) - 1;
         UINT32 kmer[2] = {0,0};
         MinimizerDeque<UINT32> minimizer_window(MINIMIZER_W + 1);
@@ -502,12 +503,12 @@ namespace hypo
         // initialise
         last_found_position = 0;
         _minimserinfo[minfoind]->minimisers.reserve(found_minimizers.size());
-       _minimserinfo[minfoind]->rel_pos.reserve(found_minimizers.size());
+        _minimserinfo[minfoind]->rel_pos.reserve(found_minimizers.size());
         for(size_t i = 0; i < found_minimizers.size(); ++i) {
             if(counter[found_minimizers[i]] == 1) { //unique minimizer
                 auto p = found_minimizers_positions[i];
                 //if (draft_seq[p]!=draft_seq[p+1] && draft_seq[p+MINIMIZER_K-1]!=draft_seq[p+MINIMIZER_K-2]) { // doesn't have HP at terminals
-                if (found_minimizers[i]!=POLYA && found_minimizers[i]!=POLYC && found_minimizers[i]!=POLYG && found_minimizers[i]!=POLYT) {
+                if (found_minimizers[i]!=Minimizer_settings.polyA && found_minimizers[i]!=Minimizer_settings.polyC && found_minimizers[i]!=Minimizer_settings.polyG && found_minimizers[i]!=Minimizer_settings.polyT) {
                     if ( found_minimizers_positions[i] - last_found_position > MAX_U16_LIMIT) {
                         fprintf(stderr, "[Hypo::Contig] Error: Length exceed limit: The distance between consecutive minimisers within a window is %u which exceeds the limit of %u !\n",found_minimizers_positions[i] - last_found_position,MAX_LEN_LIMIT);
                         exit(1);
@@ -526,6 +527,8 @@ namespace hypo
     }
         
     void Contig::divide(const UINT32 reg_index, const UINT32 beg, const UINT32 end, char pvs, char nxt) { 
+        UINT32 IDEAL_WIND_SIZE =  Window_settings.ideal_swind_size;
+        UINT32 MINIMIZER_K = Minimizer_settings.k;
         const UINT32 cToo_large = 2*IDEAL_WIND_SIZE;     
         //// Collect supported minimisers 
         
@@ -539,8 +542,8 @@ namespace hypo
         
         for (UINT32 mi=0; mi< num_minimsers; ++mi) {
             minimiser_pos += _minimserinfo[minfoidx]->rel_pos[mi]; // absolute pos
-            if (_minimserinfo[minfoidx]->coverage[mi]>=MINIMISER_COV_TH) { 
-                UINT supp_th = UINT(MINIMISER_SUPP_FRAC*_minimserinfo[minfoidx]->coverage[mi]);
+            if (_minimserinfo[minfoidx]->coverage[mi]>=Minimizer_settings.cov_th) { 
+                UINT supp_th = UINT(Minimizer_settings.supp_frac*_minimserinfo[minfoidx]->coverage[mi]);
                 if (_minimserinfo[minfoidx]->support[mi]>=supp_th && (minimiser_pos+MINIMIZER_K<end)) { // supported minimiser found which is not adjacent to next sr
                     supp_pos.push_back(minimiser_pos);
                     supp_minimisers.push_back(_minimserinfo[minfoidx]->minimisers[mi]);
@@ -632,8 +635,8 @@ namespace hypo
         UINT start = beg;
         UINT remaining_size = end-start;
         std::vector<UINT32> cut_pos;
-        while (remaining_size > IDEAL_WIND_SIZE) {
-            UINT32 search_ind = start + WIND_SIZE_SEARCH_TH;
+        while (remaining_size >  Window_settings.ideal_swind_size) {
+            UINT32 search_ind = start + Window_settings.wind_size_search_th;
             
             /*  # Breaking points(bp) of a window conceptually is the first and last bases of a window. Either should not fall into a HP.
                 # => bp is a base that may surround a HP but can not be a part of it.

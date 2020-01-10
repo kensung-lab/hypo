@@ -98,7 +98,7 @@ public:
         auto num_reg = _reg_type.size()-1; //excluding the dummy
         for (UINT32 i=0; i < num_reg; ++i) {
             if (_reg_type[i] == RegionType::LONG) { // a long window
-                if (_pwindows[i]->get_num_internal()>MIN_INTERNAL_NUM3) {
+                if (_pwindows[i]->get_num_internal()>Arms_settings.min_internal_num3) {
                     _pwindows[i]->clear_pre_suf();
                 }                
             }

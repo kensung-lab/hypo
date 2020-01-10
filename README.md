@@ -1,23 +1,40 @@
 # HyPo: Super Fast & Accurate Polisher for Long Read Genome Assemblies
 =======================================================================
 
-HyPo--a __Hy__brid __Po__lisher-- utilises short as well as long reads within a single run to polish a long reads assembly of small and large genomes. It exploits unique genomic kmers to selectively polish segments of contigs using partial order alignment of selective read-segments. As demonstrated on human genome assemblies, Hypo generates significantly more accurate polished assembly in about one-third time with about half the memory requirements in comparison to contemporary widely used polishers like Racon.
+HyPo--a **Hy**brid **Po**lisher-- utilises short as well as long reads within a single run to polish a long reads assembly of small and large genomes. It exploits unique genomic kmers to selectively polish segments of contigs using partial order alignment of selective read-segments. As demonstrated on human genome assemblies, Hypo generates significantly more accurate polished assembly in about one-third time with about half the memory requirements in comparison to contemporary widely used polishers like Racon. 
+
+Please note that "short reads" doesn't necessarily have to be NGS short reads; HiFi genomic reads (e.g. CCS) like those generated from PacBio SequelII could also be used instead. The requirement is that those reads should be highly accurate (>98% accuracy).
 
 Hypo requires the following as input:
-+ Short reads (in FASTA/FASTQ format; can be compressed)
++ Short reads/HiFi reads (in FASTA/FASTQ format; can be compressed)
 + Draft contigs (in FASTA/FASTQ format; can be compressed)
-+ Alignments between short reads and draft (in sam/bam format; should contain CIGAR)
-  - If Long reads are also to be used for polishing, then alignments between long reads and draft (in sam/bam format; should contain CIGAR)
-+ Expected mean coverage of short reads and approximate size of the genome.
++ Alignments between short reads (or HiFi reads) and the draft (in sam/bam format; should contain CIGAR)
+  - If Long (noisy) reads are also to be used for polishing, then alignments between long reads and the draft (in sam/bam format; should contain CIGAR)
++ Expected mean coverage of short reads (or HiFi reads) and approximate size of the genome.
 
-Broadly, we (conceptually) divide a draft (uncorrected) contig into two types of regions (segments): __Strong_ and _Weak_. Strong regions are those which have strong evidence (\textit{support}) of their correctness and thus do not need polishing. Weak regions, on the other hand, will be polished using POA. Each weak region will be polished using either short reads or long reads; short reads taking precedence over long reads. To identify strong regions, we make use of _solid_ kmers (expected unique genomic kmers). Strong regions also play a role in selecting the read-segments to polish their neighbouring weak regions. Furthermore, our approach takes into account that the long reads and thus the assemblies generated from them are prone to homopolymer errors as mentioned in the beginning.
+In what follows, short reads can be replaced with HiFi reads.
 
-## Dependencies
-- Either Mac OS X or Linux are currently supported.
+Broadly, we (conceptually) divide a draft (uncorrected) contig into two types of regions (segments): *Strong* and *Weak*. Strong regions are those which have strong evidence (*support*) of their correctness and thus do not need polishing. Weak regions, on the other hand, will be polished using POA. Each weak region will be polished using either short reads or long reads; short reads taking precedence over long reads. To identify strong regions, we make use of *solid* kmers (expected unique genomic kmers). Strong regions also play a role in selecting the read-segments to polish their neighbouring weak regions. Furthermore, our approach takes into account that the long reads and thus the assemblies generated from them are prone to homopolymer errors as mentioned in the beginning.
+
+## Installation
+Hypo is only available for Unix-like platforms (Linux and MAC OS).
+
+
+### Conda Package Installation
+The convenient and recommended way of installation is using the conda package as follows:
+```console
+  conda install -c bioconda hypo
+```
+
+### Installation from the source
+CmakeLists is provided in the project root folder. 
+
+#### Pre-requisites
+For installing from the source, the following requirements are assumed to be installed already (with path to their binaries available in $PATH).
 - Zlib
 - OpenMP
-- GCC (>=8) to support filesystem
-  * Following are the commands to update GCC on an Ubuntu machine (from say GCC 5):
+- GCC (>=7.3)
+  * Following are the commands to update GCC (say to GCC 8) on an Ubuntu machine (from say GCC 5):
   ```console
     sudo apt-get update; sudo apt-get install build-essential software-properties-common -y;
     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt update; 
@@ -27,20 +44,20 @@ Broadly, we (conceptually) divide a draft (uncorrected) contig into two types of
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5;
   ```
 - [HTSLIB](https://github.com/samtools/htslib) (version >=1.10)
-  + Path to the binary should be there in $PATH
   + If htslib version 1.10 or higher is not installed, we recommend using `install_deps.sh` in the project folder to install it locally.
+- [sdsl-lite](https://github.com/simongog/sdsl-lite)
+  + Can also be installed using conda as follows: 
+  ```console
+  conda install -c conda-forge sdsl-lite
+  ``` 
 - [KMC3](https://github.com/refresh-bio/KMC)
   + Required for suk
-  + Can easily be installed using conda as follows: 
+  + Can also be installed using conda as follows: 
   ```console
   conda install -c bioconda kmc
   ``` 
-  + Path to the binary should be there in $PATH
 
-## Building
-CmakeLists is provided in the project root folder.
-
-### Building Executable
+#### Building Executable
 Run the following commands to build a binary (executable) `hypo` in `build/bin` :
 If htslib version 1.10 or higher is installed:
 ```console
@@ -102,6 +119,14 @@ If htslib is not installed or the version is smaller than 1.10:
 	Number of contigs to be processed in one batch. Lower value means less memory usage but slower speed. 
 	[Default] All the contigs in the draft.
 
+	-k, --kind-sr <str>
+	Kind of the short reads. 
+	[Valid Values] 
+		sr	(Corresponding to NGS reads like Illumina reads) 
+		ccs	(Corresponding to HiFi reads like PacBio CCS reads) 
+	[Default] sr.
+
+
  	-m, --match-sr <int>
 	Score for matching bases for short reads. 
 	[Default] 5.
@@ -151,13 +176,13 @@ If no `--output` (or `-o`) is provided, `hypo_X.fasta` will be created in the wo
 If `--intermed` (or `-i`) is used, hypo will store the intermediate files corresponding to the solid kmers in a folder named `aux` in the first run. Another file indicating the progress of the run will also be created in that folder. In the next run (with `-i`), those intermediate files will be used instead of running `suk` module. Remove `-i` or delete `aux` folder to start Hypo from the beginning.
 
 ### Resource Usage
-The option `--processing-size` (or `-p`) controls the number of contigs processed in one batch. By default, all contigs will be processed in a single batch. More the number of contigs processed in a batch higher will be the memory used. Lower number, on the other hand, may not utilise the number of threads efficiently. As a reference, for the whole human genome we used `-p 96` on a 48 core machine which used about 380G RAM and finished its run in about 3 hours (only Illumina polishing).
+The option `--processing-size` (or `-p`) controls the number of contigs processed in one batch. By default, all contigs will be processed in a single batch. More the number of contigs processed in a batch higher will be the memory used. Lower number, on the other hand, may not utilise the number of threads efficiently. As a reference, for the whole human genome we used `-p 96` on a 48 core machine which used about 380G RAM and finished its run in about 3 hours (only Illumina polishing). We recommend using `-p` to be a multiple of `-t`. If the genome size is not too large for the available RAM, we recommend processing all the contigs in a single batch (i.e. avoid specifying `-p`).
 
 ### Normalised Edit Distance
 The option `--ned-th` (or `-n`) is relevant only when long reads polishing is also being done. It sets the threshold for the Normalised Edit Distance which measures similarity between a long read and the corresponding draft segment to which it is aligned. Formally, Normalised edit distance = (1bp edit distance between aligned read_segment and draft /aligned_length of draft)x100
 Higher the threshold, more read-segments will be taken into consideration. We recommend using the default value for the whole human genome polishing. 
  
-### Example  
+### Example 1 (using Illumina paired-end reads)
 
 #### Mapping the short reads to contigs:
 Assuming `$R1`, `$R2`, `$Draft` contain the names of the files containing short reads (paired-end) and draft contigs, respectively. Let `$NUMTH` represents the number of threads  to be used.
@@ -165,7 +190,7 @@ Assuming `$R1`, `$R2`, `$Draft` contain the names of the files containing short 
 minimap2 --MD -ax sr -t $NUMTH $DRAFT $R1 $R2 | samtools view -Sb - > mapped-sr.bam
 samtools sort -@$NUMTH -o mapped-sr.sorted.bam mapped-sr.bam
 samtools index mapped-sr.sorted.bam
-
+rm mapped-sr.bam
 ```
 
 #### Mapping the long reads to contigs:
@@ -174,6 +199,7 @@ Assuming `$LONGR` and `$Draft` contain the names of the files containing the lon
 minimap2 --MD -ax $RTYPE -t $NUMTH $DRAFT $LONGR | samtools view -Sb - > mapped-lg.bam
 samtools sort -@$NUMTH -o mapped-lg.sorted.bam mapped-lg.bam
 samtools index mapped-lg.sorted.bam
+rm mapped-lg.bam
 ```
 
 #### Running Hypo:
@@ -181,6 +207,8 @@ Create a text file containing the names of the short reads files.
 ```console
 echo -e "$R1\n$R2" > il_names.txt
 ```
+
+Let genome size be around 3Gbp and average coverage of Illumina reads is around 55. Say, we would like to use 48 threads and process 96 contigs in a single batch.
 
 A sample run of Hypo (for only short reads polishing) can be:
 ```console
@@ -191,14 +219,29 @@ A sample run of Hypo (for short reads as well as long reads polishing) can be:
 ```console
 ./bin/hypo -d $DRAFT -r @il_names.txt -s 3g -c 55 -b mapped-sr.sorted.bam -B mapped-lg.sorted.bam -p 96 -t 48 -o whole_genome.h2.fa
 ```
+### Example 2 (using CCS reads)
+
+#### Mapping the CCS reads to contigs:
+Assuming `$READS` and `$Draft` contain the names of the files containing CCS reads and draft contigs, respectively. Let `$NUMTH` represents the number of threads  to be used.
+```console
+minimap2 --MD -ax splice:hq -t $NUMTH $DRAFT $READS | samtools view -Sb - > mapped-ccs.bam
+samtools sort -@$NUMTH -o mapped-ccs.sorted.bam mapped-ccs.bam
+samtools index mapped-ccs.sorted.bam
+rm mapped-ccs.bam
+```
+
+#### Running Hypo:
+Let genome size be around 3Gbp and average coverage of CCS reads is around 30. Say, we would like to use 48 threads and process all the contigs in a single batch.
+A sample run of Hypo (for only CCS polishing) can be:
+```console
+./bin/hypo -d $DRAFT -r $READS -s 3g -c 30 -b mapped-ccs.sorted.bam -t 48 -o whole_genome.h.fa
+```
 
 ## Method and Results
 For the whole human genome (HG002) assembly, Hypo took about 3 hours and about 380G RAM to polish (on a 48 cores machine with 48 threads) using only Illumina reads. For polishing using Illumina as well as PacBio reads, time taken was about 4 hours and 15 minutes using about 410G RAM. The method and partial results can be found at BioRxiv.
 
 ## External Libraries
 
- * For bit-vector and rank-select queries data-structures, following library has been used:
-   + [sdsl](https://github.com/simongog/sdsl-lite)
  * [slog](https://github.com/Ritu-Kundu/slog) has been used to print time and memory usage.
  * [suk](https://github.com/Ritu-Kundu/suk) has been used as the module to compute the solid (unique) kmers.
  * An adapted version of [spoa](https://github.com/rvaser/spoa.git) library has been used for POA.
