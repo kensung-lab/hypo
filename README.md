@@ -238,7 +238,10 @@ A sample run of Hypo (for only CCS polishing) can be:
 ```
 
 ## Method and Results
-For the whole human genome (HG002) assembly, Hypo took about 3 hours and about 380G RAM to polish (on a 48 cores machine with 48 threads) using only Illumina reads. For polishing using Illumina as well as PacBio reads, time taken was about 4 hours and 15 minutes using about 410G RAM. The method and partial results can be found at BioRxiv.
+For the whole human genome (HG002) assembly, Hypo took about 3 hours and about 380G RAM to polish (on a 48 cores machine with 48 threads) using only Illumina reads. For polishing using Illumina as well as PacBio reads, time taken was about 4 hours and 15 minutes using about 410G RAM. The method and partial results are available in the following manuscript at BioRxiv:
+> "HyPo: Super Fast & Accurate Polisher for Long Read Genome Assemblies";
+> Ritu Kundu, Joshua Casey, Wing-Kin Sung;
+> bioRxiv 2019.12.19.882506; doi: https://doi.org/10.1101/2019.12.19.882506 
 
 ## External Libraries
 
