@@ -23,7 +23,13 @@ Hypo is only available for Unix-like platforms (Linux and MAC OS).
 ### Conda Package Installation
 The convenient and recommended way of installation is using the conda package as follows:
 ```console
-  conda install -c bioconda hypo
+conda install -c bioconda hypo
+```
+Htslib 1.10 may cause conflicts with some of the already installed packages. In such a case, hypo can be installed in a new environment as follows:
+```console
+conda create --name hypo_env
+conda activate hypo_env  
+conda install -c bioconda hypo
 ```
 
 ### Installation from the source
