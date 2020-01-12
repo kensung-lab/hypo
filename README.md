@@ -51,11 +51,7 @@ For installing from the source, the following requirements are assumed to be ins
   ```
 - [HTSLIB](https://github.com/samtools/htslib) (version >=1.10)
   + If htslib version 1.10 or higher is not installed, we recommend using `install_deps.sh` in the project folder to install it locally.
-- [sdsl-lite](https://github.com/simongog/sdsl-lite)
-  + Can also be installed using conda as follows: 
-  ```console
-  conda install -c conda-forge sdsl-lite
-  ``` 
+
 - [KMC3](https://github.com/refresh-bio/KMC)
   + Required for suk
   + Can also be installed using conda as follows: 
@@ -71,7 +67,7 @@ If htslib version 1.10 or higher is installed:
   cd hypo
   mkdir build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Release ..
+  cmake -DCMAKE_BUILD_TYPE=Release -Doptimise_for_native=ON ..
   make -j 8
 ```
 If htslib is not installed or the version is smaller than 1.10:
@@ -82,10 +78,12 @@ If htslib is not installed or the version is smaller than 1.10:
   ./install_deps.sh
   mkdir build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Release ..
+  cmake -DCMAKE_BUILD_TYPE=Release -Doptimise_for_native=ON ..
   make -j 8
 ```
-**Note:** If `--recursive` was omitted from `git clone`, please run `git submodule init` and `git submodule update` before compiling.
+**Notes:** 
+* If `--recursive` was omitted from `git clone`, please run `git submodule init` and `git submodule update` before compiling.
+* If target machine is different from the one on which Hypo is being compiled, exclude the flag `-Doptimise_for_native=ON`.
 
 
 ## Usage of the tool: 
@@ -253,6 +251,7 @@ bioRxiv 2019.12.19.882506; doi: https://doi.org/10.1101/2019.12.19.882506
 
 ## External Libraries
 
+ * [sdsl-lite](https://github.com/simongog/sdsl-lite) has been used for rank-select and bit-vectors data-structures.
  * [slog](https://github.com/Ritu-Kundu/slog) has been used to print time and memory usage.
  * [suk](https://github.com/Ritu-Kundu/suk) has been used as the module to compute the solid (unique) kmers.
  * An adapted version of [spoa](https://github.com/rvaser/spoa.git) library has been used for POA.
