@@ -17,11 +17,11 @@ In what follows, short reads can be replaced with HiFi reads.
 Broadly, we (conceptually) divide a draft (uncorrected) contig into two types of regions (segments): *Strong* and *Weak*. Strong regions are those which have strong evidence (*support*) of their correctness and thus do not need polishing. Weak regions, on the other hand, will be polished using POA. Each weak region will be polished using either short reads or long reads; short reads taking precedence over long reads. To identify strong regions, we make use of *solid* kmers (expected unique genomic kmers). Strong regions also play a role in selecting the read-segments to polish their neighbouring weak regions. Furthermore, our approach takes into account that the long reads and thus the assemblies generated from them are prone to homopolymer errors as mentioned in the beginning.
 
 ## Installation
-Hypo is only available for Unix-like platforms (Linux and MAC OS).
+Hypo is only available for Unix-like platforms (Linux and MAC OS). We recommend using *Option_1* for a convenient installation and in the case where target machine is different from the one on which hypo is installed. On the other hand, *Option_2* is more suitable if the binary of hypo is to be run on the same machine on which it is compiled because then a machine-specific optimised (and thus slightly faster) binary can be produced using the flag `-Doptimise_for_native=ON`.
 
 
-### Conda Package Installation
-The convenient and recommended way of installation is using the conda package as follows:
+### Option_1: Conda Package Installation
+The convenient way of installation is using the conda package as follows:
 ```console
 conda install -c bioconda hypo
 ```
@@ -32,7 +32,7 @@ conda activate hypo_env
 conda install -c bioconda hypo
 ```
 
-### Installation from the source
+### Option_2: Installation from the source
 CmakeLists is provided in the project root folder. 
 
 #### Pre-requisites

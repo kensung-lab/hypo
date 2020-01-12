@@ -12,7 +12,7 @@ Module for finding Solid (Unique) Kmers from genomic reads-data.
   ```console
   conda install -c bioconda kmc
   ``` 
-  + KMC should be in the path for Suk to work.
+  + KMC should be in the path (`$PATH`) for Suk to work.
 
 ## Building
 CmakeLists is provided in the project root folder.
@@ -23,7 +23,7 @@ Run the following commands to build a library `suk.a` in `build/lib` :
   cd suk
   mkdir build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Release ..
+  cmake -DCMAKE_BUILD_TYPE=Release -Doptimise_for_native=ON ..
   make
 ```
 ### Building Executable
@@ -33,27 +33,29 @@ Run the following commands to build a binary (executable) `suk` in `build/bin` :
   cd suk
   mkdir build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Release -Dsuk_build_executable=ON ..
+  cmake -DCMAKE_BUILD_TYPE=Release -Dsuk_build_executable=ON -Doptimise_for_native=ON ..
   make
 ```
-**Note:** If `--recursive` was omitted from `git clone`, please run `git submodule init` and `git submodule update` before compiling.
+**Notes:** 
+* If `--recursive` was omitted from `git clone`, please run `git submodule init` and `git submodule update` before compiling.
+* If target machine is different from the one on which Hypo is being compiled, exclude the flag `-Doptimise_for_native=ON`.
 
 ## Usage of the Tool
  ```
  suk <args>
 
 Mandatory args:
-  -i, --input <str>           Input file  name containing reads (in fasta/fastq format; can be compressed). A list of files containing file names in each line can be passed with @ prefix.
-  -k, --kmer-len <int>        The length of the kmer (must be positive).
+  -i, --input <str>   Input file  name containing reads (in fasta/fastq format; can be compressed). A list of files containing file names in each line can be passed with @ prefix.
+  -k, --kmer-len <int>    The length of the kmer (must be positive).
  Optional args:
   -o, --output-prefix <str>   Prefix of the output filename. [DEAFULT: SUK_k<x> where x is the value of k] 
-  -t, --threads <int>         Number of threads. [DEFAULT: 1] 
-  -d, --dump-txt              Dumps (in addition to the bit-vector) the unique kmers into textfile (<prefix>.txt where prefix is the value of output-prefix). [DEFAULT: False].
-  -e, --exclude-hp            Excludes the kmers having homopolymer terminals (see README.md). [DEFAULT: False].
-  -c, --coverage <int> 		    Expected coverage of the reads. KMC counter will be set to 4 x expected coverage. [DEFAULT: 50].
-  -m, --kmc-memory <int> 	    Max memory usage of KMC (in GB). [DEFAULT: 12].
+  -t, --threads <int>   Number of threads. [DEFAULT: 1] 
+  -d, --dump-txt    Dumps (in addition to the bit-vector) the unique kmers into textfile (<prefix>.txt where prefix is the value of output-prefix). [DEFAULT: False].
+  -e, --exclude-hp    Excludes the kmers having homopolymer terminals (see README.md). [DEFAULT: False].
+  -c, --coverage <int> 		 Expected coverage of the reads. KMC counter will be set to 4 x expected coverage. [DEFAULT: 50].
+  -m, --kmc-memory <int> 	 Max memory usage of KMC (in GB). [DEFAULT: 12].
 
-  -h, --help                  Prints the usage.
+  -h, --help    Prints the usage.
 
   ```
 ### Output Files
@@ -61,12 +63,12 @@ Mandatory args:
 - If text-dump has been activated (using `-d` or `--dump-txt`), <prefix>.txt file will also be created that contains the unique kmers (one in each line). 
  
 ### Example  
-The tool can be run on the sample data (EColi K12) which can be downloaded from [this link](https://www.ncbi.nlm.nih.gov/sra/?term=SRR1770413) in the `sample` folder, as follows (assuming you are in `build` folder):
+The tool can be run on the sample data (EColi K12) supplied in the `sample` folder, as follows (assuming you are in `build` folder):
  ```console
   ./bin/suk -k 15 -i @../sample/illumina_files.txt
   ```
 
-Here, it is assumed that the two files for Illumina paired-end reads: SRR1770413_1.fastq and SRR1770413_2.fastq have been downloaded in the `sample` folder and the names of these two files are written in `illumina_files.txt` in the same folder. The tool will generate and store the bit-vector representing unique kmers of length 15 in the file `SUK_k15.bv` in the folder from which the tool has been run.
+Here, there are two files for Illumina paired-end reads: SRR1770413_1.fastq and SRR1770413_2.fastq. The names of these two files are written in `illumina_files.txt`. The tool will generate and store the bit-vector representing unique kmers of length 15 in the file `SUK_k15.bv` in the folder from which the tool has been run.
 
 
 To dump the kmers in text-format, run the following:
@@ -166,9 +168,6 @@ The tool
 
  * [sdsl](https://github.com/simongog/sdsl-lite) library has been used for bit-vector implementation.
  * [slog](https://github.com/Ritu-Kundu/slog) has been used to print time and memory usage.
-
-
-
 
 
 

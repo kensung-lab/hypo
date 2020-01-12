@@ -7,7 +7,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug mode")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)  # Compiler-specific features are not used.
@@ -19,6 +18,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 # Options
 option(suk_build_executable "Build suk standalone tool" ON)
+option(optimise_for_native "Build with -march=native" OFF)
+
+if(optimise_for_native)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3 -march=native")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3")
+endif()
 
 # build SUK as a static library by default
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared")
