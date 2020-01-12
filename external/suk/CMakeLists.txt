@@ -7,7 +7,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug mode")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3 -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)  # Compiler-specific features are not used.
@@ -51,7 +51,6 @@ set_target_properties(suk
     PROPERTIES
     VERSION ${suk_VERSION}
     SOVERSION ${suk_VERSION})
-#target_link_libraries(suk PRIVATE thread_pool pthread nthits sdsl slog OpenMP::OpenMP_CXX)
 target_link_libraries(suk sdsl slog kmc_api ${ZLIB_LIBRARIES})
 
 # Create target 'install' for installing libraries.
