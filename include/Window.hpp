@@ -45,8 +45,8 @@ public:
     _longest_pre_len(0),_longest_suf_len(0), _filter() {}
 
     Window(const PackedSeq<4> & ps, const size_t left_ind, const size_t right_ind, WindowType wt): _wtype(wt), 
-    _num_internal(1), _num_pre(0), _num_suf(0), _num_empty(0), _longest_pre_len(0),_longest_suf_len(0), _filter()
-    {_internal_arms.emplace_back(PackedSeq<2>(ps,left_ind,right_ind));
+    _num_internal(0), _num_pre(0), _num_suf(0), _num_empty(0), _longest_pre_len(0),_longest_suf_len(0), _filter(), _draft(ps,left_ind,right_ind)
+    {
         if (wt==WindowType::LONG) {
             _filter.initialise(ps.unpack(left_ind,right_ind));
         }
@@ -127,6 +127,7 @@ private:
     UINT32 _num_empty;
     UINT32 _longest_pre_len;
     UINT32 _longest_suf_len;
+    PackedSeq<4> _draft;
     std::vector<PackedSeq<2>> _internal_arms;
     std::vector<PackedSeq<2>> _pre_arms;
     std::vector<PackedSeq<2>> _suf_arms;

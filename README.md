@@ -249,6 +249,11 @@ Ritu Kundu, Joshua Casey, Wing-Kin Sung
 bioRxiv 2019.12.19.882506; doi: https://doi.org/10.1101/2019.12.19.882506 
 ```
 
+## Limitations
+ * N's in the contig/scaffold to be polished are considered as any other base (i.e. an *N* will be replaced by the most frequent base aligned to it in the corresponding POA graph). 
+ * The maximum length a contig/scaffold can have is limited to 4,294,967,295 (the maximum value for a 32-bit unsigned integer). 
+
+
 ## External Libraries
 
  * [sdsl-lite](https://github.com/simongog/sdsl-lite) has been used for rank-select and bit-vectors data-structures.

@@ -152,8 +152,8 @@ PackedSeq<NB>::PackedSeq(const UINT32 seq_len, const UINT32 offset, const UINT8 
 }
 
 // Creates new packed seq (of the same type) from left_ind(inclusive) to right_ind(exclusive) of another packed seq
-template <>
-PackedSeq<2>::PackedSeq(const PackedSeq<2> & ps, const size_t left_ind, const size_t right_ind) {
+template <int NB>
+PackedSeq<NB>::PackedSeq(const PackedSeq<NB> & ps, const size_t left_ind, const size_t right_ind) {
     //std::cout << "Left : Right : old seq len : " << left_ind << " " << right_ind <<" " <<ps.get_seq_size()<<std::endl;
     size_t old_seq_len = ps.get_seq_size();
     assert(right_ind <= old_seq_len && left_ind<=right_ind);
@@ -176,7 +176,8 @@ PackedSeq<2>::PackedSeq(const PackedSeq<2> & ps, const size_t left_ind, const si
         _data.assign(ps._data.begin()+start_byte_ind,ps._data.begin()+end_byte_ind+1);
     }
     else {
-        UINT8 lshift = UINT8 (start_ind_in_byte <<1);  // i*2
+        UINT8 mult = UINT8((NB==2) ? (1) : (2));
+        UINT8 lshift = UINT8 (start_ind_in_byte <<mult);  // i*2 (NB is 2) or i*4 (NB is 4)
         UINT8 rshift = UINT8 (8 - lshift); 
         BYTE rmask = BYTE((0x1 << lshift)-1);
         size_t ind = 0;
@@ -193,7 +194,7 @@ PackedSeq<2>::PackedSeq(const PackedSeq<2> & ps, const size_t left_ind, const si
 }
 
 // Creates new packed seq (2bit base) from left_ind(inclusive) to right_ind(exclusive) of another packed seq (4-bits base)
-template <>
+template <>template<>
 PackedSeq<2>::PackedSeq(const PackedSeq<4> & ps, const size_t left_ind, const size_t right_ind) {
     auto old_seq_len = ps.get_seq_size();
     assert(right_ind <= old_seq_len && left_ind<=right_ind);

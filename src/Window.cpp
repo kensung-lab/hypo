@@ -47,7 +47,7 @@ void Window::generate_consensus(const UINT32 engine_idx) {
     if (_num_empty > num_non_empty_arms) {
         set_consensus(""); // empty sequence is consensus
     }
-    else if (num_non_empty_arms > 2) { // 1 is draft; there should be at least 2 arms to do poa
+    else if (num_non_empty_arms >= 2) { // 1 is draft; there should be at least 2 arms to do poa
         if (wt == WindowType::SHORT) {
             generate_consensus_short(engine_idx);
         }
@@ -56,20 +56,20 @@ void Window::generate_consensus(const UINT32 engine_idx) {
         }
     }
     else {
-        set_consensus(_internal_arms[0].unpack());
+        set_consensus(_draft.unpack());
     }  
 }
 
 std::ostream &operator<<(std::ostream &os, const Window &wnd) {
         // Write numbers
-        os << wnd._num_internal-1 << "\t" << wnd._num_pre << "\t" << wnd._num_suf << "\t" << wnd._num_empty << std::endl;
+        os << wnd._num_internal << "\t" << wnd._num_pre << "\t" << wnd._num_suf << "\t" << wnd._num_empty << std::endl;
         // Write draft sequence
-        os << "++\t" << wnd._internal_arms[0].unpack() << std::endl;
+        os << "++\t" << wnd._draft.unpack() << std::endl;
 
         // Write consensus sequence
         os << "++\t" << wnd._consensus << std::endl;
         // Write internal arms
-        for (UINT32 i=1; i < wnd._num_internal; ++i) {
+        for (UINT32 i=0; i < wnd._num_internal; ++i) {
             os << wnd._internal_arms[i].unpack() << std::endl;
         }
         // Write pref arms
@@ -91,12 +91,15 @@ void Window::generate_consensus_short(const UINT32 engine_idx) {
     
     // internal
     // Avoid draft if an internal arm exists
-    UINT i=0;
     _alignment_engines[engine_idx]->changeAlignType(spoa::AlignmentType::kNW);
-    if (_internal_arms.size()>1) { // other internal arms than draft; ignore draft
-        ++i;
+    if (_internal_arms.size()==0) { // use draft only when no internal arm
+        // draft will never have zero size
+        //std::string unpacked_str(std::move(_internal_arms[i].unpack()));
+        std::string modified_str = cHead + _draft.unpack() + cTail;
+        auto alignment = _alignment_engines[engine_idx]->align(modified_str, graph);
+        graph->add_alignment(alignment, modified_str);
     }
-    for (; i <  _internal_arms.size(); ++i) {
+    for (UINT i =0; i <  _internal_arms.size(); ++i) {
         if (_internal_arms[i].get_seq_size() > 0) {                
             //std::string unpacked_str(std::move(_internal_arms[i].unpack()));
             std::string modified_str = cHead + _internal_arms[i].unpack() + cTail;
@@ -145,7 +148,7 @@ void Window::generate_consensus_short(const UINT32 engine_idx) {
         set_marked_consensus(consensus);   
     }
     else {
-        set_consensus(_internal_arms[0].unpack());
+        set_consensus(_draft.unpack());
     }
     
 }
@@ -160,18 +163,21 @@ void Window::generate_consensus_long(const UINT32 engine_idx, bool initial) {
     counts.reserve(num_non_empty_arms);
     
     // internal
-    // Avoid draft if an internal arm exists
-    UINT i=0;
     _alignment_engines[engine_idx]->changeAlignType(spoa::AlignmentType::kNW);
     if (!initial) { // ignore draft and add consensus, if re-round of polishing
-        ++i;
         if (_consensus.size() > 0) {
             auto alignment = _alignment_engines_long[engine_idx]->align(_consensus, graph);
             graph->add_alignment(alignment, _consensus);
         }
 
     }
-    for (; i <  _internal_arms.size(); ++i) {
+    else { //  add draft
+        std::string unpacked_str(std::move(_draft.unpack()));
+        // draft's size will never be zero
+        auto alignment = _alignment_engines_long[engine_idx]->align(unpacked_str, graph);
+        graph->add_alignment(alignment, unpacked_str);
+    }
+    for ( UINT i=0; i <  _internal_arms.size(); ++i) {
         std::string unpacked_str(std::move(_internal_arms[i].unpack()));
         if (unpacked_str.size() > 0) {
             arms_added = true;
@@ -219,14 +225,14 @@ void Window::generate_consensus_long(const UINT32 engine_idx, bool initial) {
         //std::vector<std::string> msa;
         //graph->generate_multiple_sequence_alignment(msa, true);
         //consensus = graph->generate_consensus();
-        //set_consensus(expand(consensus, dst, msa, counts),false);            
+        //set_consensus(expand(consensus, dst, msa, counts),false); 
+        if (initial) { // call second round of polishing
+            generate_consensus_long(engine_idx,false);
+        }           
     }
     else {
-        set_consensus(_internal_arms[0].unpack());
+        set_consensus(_draft.unpack());
     } 
-    if (initial) { // call second round of polishing
-        generate_consensus_long(engine_idx,false);
-    }
 }
 
 

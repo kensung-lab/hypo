@@ -91,11 +91,12 @@ public:
 	// Creates packed seq from htslib seq format.
 	PackedSeq(const UINT32 seq_len, const UINT32 offset, const UINT8 * hts_seq); // makes packed seq from htslib seq format.
 
-	// Creates new packed seq (2bits base) from left_ind(inclusive) to right_ind(exclusive) of another packed seq (2bits base)
-	PackedSeq(const PackedSeq<2> & ps, const size_t left_ind, const size_t right_ind);
+	// Creates new packed seq from left_ind(inclusive) to right_ind(exclusive) of another packed seq (of the same type/NB)
+	PackedSeq(const PackedSeq & ps, const size_t left_ind, const size_t right_ind);
 
 	// Creates new packed seq (2bits base) from left_ind(inclusive) to right_ind(exclusive) of another packed seq (4-bits base)
-	PackedSeq(const PackedSeq<4> & ps, const size_t left_ind, const size_t right_ind) ;
+	template<int MB>
+	PackedSeq(const PackedSeq<MB> & ps, const size_t left_ind, const size_t right_ind) ;
 	
 	PackedSeq(const PackedSeq &) = default;
     PackedSeq &operator=(const PackedSeq &) = delete;
@@ -160,9 +161,7 @@ private:
 
 // TODO: Make it elegant. Currently, this is just a work-around to avoid error "specialization of ... after instantiation ..."
 
-template <>
-PackedSeq<2>::PackedSeq(const PackedSeq<2> & ps, const size_t left_ind, const size_t right_ind);
-template <>
+template <> template<>
 PackedSeq<2>::PackedSeq(const PackedSeq<4> & ps, const size_t left_ind, const size_t right_ind);
 
 extern template class PackedSeq<2>;
