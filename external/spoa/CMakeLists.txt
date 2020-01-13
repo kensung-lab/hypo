@@ -14,9 +14,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(spoa_build_executable "Build spoa standalone tool" OFF)
 option(spoa_build_tests "Build spoa unit tests" OFF)
-option(spoa_optimize_for_native "Buiold spoa with march=native" ON)
+option(optimize_for_native "Buiold spoa with march=native" OFF)
 
-if (spoa_optimize_for_native)
+if (optimize_for_native)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
 
