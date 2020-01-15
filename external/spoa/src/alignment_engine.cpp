@@ -64,7 +64,6 @@ std::unique_ptr<AlignmentEngine> createAlignmentEngine(AlignmentType type,
                                                       q, c);
 
     if (alignment_engine == nullptr) {
-        std::cout << "ERROR" << std::endl;
         return createSisdAlignmentEngine(type, subtype, m, n, g, e, q, c);
     }
 

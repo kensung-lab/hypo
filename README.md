@@ -228,7 +228,7 @@ A sample run of Hypo (for short reads as well as long reads polishing) can be:
 #### Mapping the CCS reads to contigs:
 Assuming `$READS` and `$Draft` contain the names of the files containing CCS reads and draft contigs, respectively. Let `$NUMTH` represents the number of threads  to be used.
 ```console
-minimap2 --MD -ax splice:hq -t $NUMTH $DRAFT $READS | samtools view -Sb - > mapped-ccs.bam
+minimap2 --MD -ax asm20 -t $NUMTH $DRAFT $READS | samtools view -Sb - > mapped-ccs.bam
 samtools sort -@$NUMTH -o mapped-ccs.sorted.bam mapped-ccs.bam
 samtools index mapped-ccs.sorted.bam
 rm mapped-ccs.bam
