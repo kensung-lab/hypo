@@ -168,6 +168,7 @@ namespace hypo
             }
             ++windex;         
         }
+        // Handle window after each srvg
         for (UINT32 ind=0; ind < _numSR; ++ind,++windex) {
             _reg_pos[sr_pos[ind]]=1;
             UINT32 mw_start = sr_pos[ind]+sr_len[ind];
@@ -506,15 +507,11 @@ namespace hypo
         _minimserinfo[minfoind]->rel_pos.reserve(found_minimizers.size());
         for(size_t i = 0; i < found_minimizers.size(); ++i) {
             if(counter[found_minimizers[i]] == 1) { //unique minimizer
-                auto p = found_minimizers_positions[i];
+                UINT32 p = found_minimizers_positions[i];
                 //if (draft_seq[p]!=draft_seq[p+1] && draft_seq[p+MINIMIZER_K-1]!=draft_seq[p+MINIMIZER_K-2]) { // doesn't have HP at terminals
                 if (found_minimizers[i]!=Minimizer_settings.polyA && found_minimizers[i]!=Minimizer_settings.polyC && found_minimizers[i]!=Minimizer_settings.polyG && found_minimizers[i]!=Minimizer_settings.polyT) {
-                    if ( found_minimizers_positions[i] - last_found_position > MAX_U16_LIMIT) {
-                        fprintf(stderr, "[Hypo::Contig] Error: Length exceed limit: The distance between consecutive minimisers within a window is %u which exceeds the limit of %u !\n",found_minimizers_positions[i] - last_found_position,MAX_LEN_LIMIT);
-                        exit(1);
-                    }
                     _minimserinfo[minfoind]->minimisers.push_back(found_minimizers[i]);
-                    _minimserinfo[minfoind]->rel_pos.push_back(found_minimizers_positions[i] - last_found_position);
+                    _minimserinfo[minfoind]->rel_pos.push_back(p - last_found_position);                    
                     last_found_position = found_minimizers_positions[i];
                 }
             }

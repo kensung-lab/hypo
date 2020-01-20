@@ -39,16 +39,16 @@ namespace hypo
 using KmerInfo = struct _kmerinfo {
     _kmerinfo(UINT64 kmer):kid(kmer),coverage(0),support(0){}
     UINT64 kid;
-    UINT64 coverage;
-    UINT64 support;
+    UINT16 coverage;
+    UINT16 support;
     std::mutex k_mutex;
 };
 
 using MWMinimiserInfo = struct Sminimiserinfo {
-    std::vector<UINT32> minimisers; // minimser (2 bit based)
-    std::vector<UINT16> rel_pos; // Relative position of each minimiser wrt pvs one' first is wrt the start of the window
-    std::vector<UINT32> support;
-    std::vector<UINT32> coverage;
+    std::vector<UINT32> minimisers; // minimser (2 bit based); The MSB represents validity (0 for valid, 1 for invalid)
+    std::vector<UINT32> rel_pos; // Relative position of each minimiser wrt pvs one' first is wrt the start of the window
+    std::vector<UINT16> support;
+    std::vector<UINT16> coverage;
     std::mutex m_mutex;
 };
 

@@ -124,7 +124,7 @@ namespace hypo{
     
   // Minimiser based window cutting thresholds/constants
   using MinimizerSettings = struct SMinimizerSettings{
-    UINT k; // Change Poly-base macros, if this k gets changed.
+    UINT k; // Change Poly-base macros, if this k gets changed.; Should be <= 16 (minimiser is 32 bits)
     UINT w;
     UINT cov_th;
     double supp_frac;

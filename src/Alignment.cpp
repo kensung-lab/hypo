@@ -145,7 +145,7 @@ void Alignment::update_minimisers_support (Contig& contig) {
         
         //we have to make a vector of found minimizers and a map to validity, to handle duplicates
         //is there a better solution?
-        std::unordered_multimap<UINT32,UINT16> found_minimizers; // maps read minimser to its position in the read
+        std::unordered_multimap<UINT32,UINT32> found_minimizers; // maps read minimser to its position in the read
         
         for(size_t i = 0; i < _apseq.get_seq_size(); ++i) {
             BYTE c = _apseq.enc_base_at(i);
@@ -173,7 +173,7 @@ void Alignment::update_minimisers_support (Contig& contig) {
             }
         }
 
-        // Check minimser in each window; incrementing support if it f0alls within reasonable range (2*mk on either side)
+        // Check minimser in each window; incrementing support if it falls within reasonable range (2*mk on either side)
         UINT16 num_cbases = _re-_rb;
         for (UINT32 i=first_windex; i<=last_windex; i=i+2) {
             UINT32 minfoidx = (contig._is_win_even) ? (i/2) : ((i-1)/2);
@@ -182,9 +182,9 @@ void Alignment::update_minimisers_support (Contig& contig) {
             auto minimiser_pos = contig._SMreg_pos(i+1);         
             for (UINT32 mi=0; mi< num_minimsers; ++mi) {
                 minimiser_pos+=contig._minimserinfo[minfoidx]->rel_pos[mi];
-                UINT16 c_dist = minimiser_pos - _rb;
-                UINT16 range_left = ((c_dist>(2*MINIMIZER_K))?(c_dist-(2*MINIMIZER_K)):(0));
-                UINT16 range_right = std::min(num_cbases,(UINT16)(c_dist+(3*MINIMIZER_K)));
+                UINT32 c_dist = minimiser_pos - _rb;
+                UINT32 range_left = ((c_dist>(2*MINIMIZER_K))?(c_dist-(2*MINIMIZER_K)):(0));
+                UINT32 range_right = std::min(num_cbases,(UINT16)(c_dist+(3*MINIMIZER_K)));
                 if (minimiser_pos>=_rb && minimiser_pos<_re) {
                     // coverage
                     contig.increment_minimser_coverage(minfoidx,mi);
