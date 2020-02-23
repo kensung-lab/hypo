@@ -61,7 +61,7 @@ public:
     static void prepare_for_poa(const ScoreParams& sp, const UINT32 num_threads);
     void generate_consensus(const UINT32 engine_idx);
     inline std::string get_consensus() const {return _consensus;}
-    inline size_t get_window_len() const {return _internal_arms[0].get_seq_size();}
+    inline size_t get_window_len() const {return _draft.get_seq_size();}
 
     inline void add_prefix(const PackedSeq<2>& ps) { 
         bool should_add = true;

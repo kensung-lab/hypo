@@ -29,11 +29,11 @@ namespace hypo
 {
     bool Contig::_no_long_reads = false;
     Contig::Contig(const UINT32 id, const std::string& name, const std::string seq): 
-    _id(id), _name(name), _pseq(seq), _solid_pos(seq.size(),0), _reg_pos(seq.size()+1,0), 
+    _id(id), _name(name), _len(seq.size()), _pseq(seq), _solid_pos(seq.size(),0), _reg_pos(seq.size()+1,0), 
     _pseudo_reg_pos(0), _numSR(0), _lenSR(0) {}
     
     Contig::Contig(const UINT32 id, const kseq_t * ks): 
-    _id(id), _name(std::string(ks->name.s,ks->name.l)), _pseq(ks) , _solid_pos(ks->seq.l,0), 
+    _id(id), _name(std::string(ks->name.s,ks->name.l)), _len(ks->seq.l), _pseq(ks) , _solid_pos(ks->seq.l,0), 
     _reg_pos(ks->seq.l+1,0), _pseudo_reg_pos(0), _numSR(0), _lenSR(0) {}
     
 
@@ -42,7 +42,7 @@ namespace hypo
         UINT64 kmer=0;
         UINT kmer_len=0;
         const UINT64 kmask = (1ULL<<2*k) - 1;
-        size_t num_bases = _pseq.get_seq_size();
+        size_t num_bases = _len;
         for (size_t i=0; i < num_bases; ++i) {
             BYTE b = _pseq.enc_base_at(i);
             if (b < 4) { //ACGT
@@ -154,7 +154,7 @@ namespace hypo
         _minimserinfo.reserve(_numSR+1);
         _reg_pos[0]=1;
         // dummy
-        auto contig_len = _pseq.get_seq_size();
+        auto contig_len = _len;
         UINT32 dummy_sr_pos = UINT32(contig_len);
         sr_pos.emplace_back(dummy_sr_pos);
         _reg_pos[dummy_sr_pos]=1;
@@ -292,7 +292,7 @@ namespace hypo
     void Contig::prepare_long_windows() {
         ///////////////////////////////////////////////////////
         /* Merge smaller windows into larger ones */
-        auto contig_len = _pseq.get_seq_size();
+        auto contig_len = _len;
         _pseudo_reg_pos = std::move(sdsl::bit_vector(contig_len+1,0));
         // pseudo_reg_type contains LONG for windows and SR for pseudo-SR       
         size_t num_reg = _reg_type.size(); // including the dummy

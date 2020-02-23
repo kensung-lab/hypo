@@ -200,7 +200,7 @@ void decodeFlags(int argc, char *argv[], InputFlags &flags)
 
     case 'B':
       flags.lr_bam_filename = std::string(optarg);
-      if (!file_exists(flags.sr_bam_filename)) {
+      if (!file_exists(flags.lr_bam_filename)) {
         fprintf(stderr, "[Hypo::utils] Error: File Error: Long reads BAM file does not exist %s!\n",flags.lr_bam_filename.c_str());
         exit(1);
       }

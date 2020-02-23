@@ -47,10 +47,10 @@ using Arm = struct SArm{
 class Alignment {
 public:
     // Alignment for short read (does not consider normalised edit distance)
-    Alignment(bam1_t *hts_align);
+    Alignment(Contig& contig, bam1_t *hts_align);
 
     // Alignment for long read (considers normalised edit distance)
-    Alignment(UINT64 norm_edit_th, bam1_t *hts_align);
+    Alignment(Contig& contig, UINT64 norm_edit_th, bam1_t *hts_align);
 
     Alignment(const Alignment &) = delete;
     Alignment &operator=(const Alignment &) = delete;

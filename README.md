@@ -177,7 +177,7 @@ If htslib is not installed or the version is smaller than 1.10:
 If no `--output` (or `-o`) is provided, `hypo_X.fasta` will be created in the working directory where <X> is the name of the draft file. 
 
 ### Intermediate Files
-If `--intermed` (or `-i`) is used, hypo will store the intermediate files corresponding to the solid kmers in a folder named `aux` in the first run. Another file indicating the progress of the run will also be created in that folder. In the next run (with `-i`), those intermediate files will be used instead of running `suk` module. Remove `-i` or delete `aux` folder to start Hypo from the beginning.
+If `--intermed` (or `-i`) is used, hypo will store the intermediate files corresponding to the solid kmers in a folder named `aux` in the first run. Another file indicating the progress of the run will also be created in that folder. In the next run (with `-i`), those intermediate files will be used instead of running `suk` module. Remove `-i` or delete `aux` folder to start Hypo from the beginning. **It is recommended to use this flag while going for multiple rounds of polishing using Hypo so as to make the subsequent rounds faster.**
 
 ### Resource Usage
 The option `--processing-size` (or `-p`) controls the number of contigs processed in one batch. By default, all contigs will be processed in a single batch. More the number of contigs processed in a batch higher will be the memory used. Lower number, on the other hand, may not utilise the number of threads efficiently. As a reference, for the whole human genome we used `-p 96` on a 48 core machine which used about 380G RAM and finished its run in about 3 hours (only Illumina polishing). We recommend using `-p` to be a multiple of `-t`. If the genome size is not too large for the available RAM, we recommend processing all the contigs in a single batch (i.e. avoid specifying `-p`).
@@ -191,7 +191,7 @@ Higher the threshold, more read-segments will be taken into consideration. We re
 #### Mapping the short reads to contigs:
 Assuming `$R1`, `$R2`, `$Draft` contain the names of the files containing short reads (paired-end) and draft contigs, respectively. Let `$NUMTH` represents the number of threads  to be used.
 ```console
-minimap2 --MD -ax sr -t $NUMTH $DRAFT $R1 $R2 | samtools view -Sb - > mapped-sr.bam
+minimap2 --secondary=no --MD -ax sr -t $NUMTH $DRAFT $R1 $R2 | samtools view -Sb - > mapped-sr.bam
 samtools sort -@$NUMTH -o mapped-sr.sorted.bam mapped-sr.bam
 samtools index mapped-sr.sorted.bam
 rm mapped-sr.bam
@@ -200,7 +200,7 @@ rm mapped-sr.bam
 #### Mapping the long reads to contigs:
 Assuming `$LONGR` and `$Draft` contain the names of the files containing the long reads (PacBio or ONT) and draft contigs, respectively. Let `$NUMTH` represents the number of threads to be used. `$RTYPE` will be `map-pb` for PacBio and `map-ont` for ONT reads.
 ```console
-minimap2 --MD -ax $RTYPE -t $NUMTH $DRAFT $LONGR | samtools view -Sb - > mapped-lg.bam
+minimap2 --secondary=no --MD -ax $RTYPE -t $NUMTH $DRAFT $LONGR | samtools view -Sb - > mapped-lg.bam
 samtools sort -@$NUMTH -o mapped-lg.sorted.bam mapped-lg.bam
 samtools index mapped-lg.sorted.bam
 rm mapped-lg.bam
@@ -228,7 +228,7 @@ A sample run of Hypo (for short reads as well as long reads polishing) can be:
 #### Mapping the CCS reads to contigs:
 Assuming `$READS` and `$Draft` contain the names of the files containing CCS reads and draft contigs, respectively. Let `$NUMTH` represents the number of threads  to be used.
 ```console
-minimap2 --MD -ax asm20 -t $NUMTH $DRAFT $READS | samtools view -Sb - > mapped-ccs.bam
+minimap2 --secondary=no --MD -ax asm20 -t $NUMTH $DRAFT $READS | samtools view -Sb - > mapped-ccs.bam
 samtools sort -@$NUMTH -o mapped-ccs.sorted.bam mapped-ccs.bam
 samtools index mapped-ccs.sorted.bam
 rm mapped-ccs.bam

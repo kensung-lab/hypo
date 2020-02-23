@@ -26,14 +26,26 @@
 
 namespace hypo
 {
-Alignment::Alignment(bam1_t *hts_align): is_valid(true) {
+Alignment::Alignment(Contig& contig, bam1_t *hts_align): is_valid(true) {
     initialise_pos(hts_align);
+    UINT32 clen = contig._len;
+    if (_rb >= clen || _re > clen) {
+        _qname = std::string(bam_get_qname(hts_align), hts_align->core.l_qname);
+        fprintf(stdout, "[Hypo::Alignment] Error: Alignment File error: Looks like the reference in the alignment file is different from the draft. Contig (%s): Read (%s): rb (%u): re (%u): clen (%u)\n",contig._name.c_str(), _qname.c_str(), _rb, _re, clen); 
+        exit(1);
+    }
     copy_data(hts_align);
 }
 
-Alignment::Alignment(UINT64 norm_edit_th, bam1_t *hts_align): is_valid(true) {
+Alignment::Alignment(Contig& contig, UINT64 norm_edit_th, bam1_t *hts_align): is_valid(true) {
     initialise_pos(hts_align);
     UINT32 rlen = _re-_rb;
+    UINT32 clen = contig._len;
+    if (_rb >= clen || _re > clen) {
+        _qname = std::string(bam_get_qname(hts_align), hts_align->core.l_qname);
+        fprintf(stdout, "[Hypo::Alignment] Error: Alignment File error:: Looks like the reference in the alignment file is different from the draft. Contig (%s): Read (%s): rb (%u): re (%u): clen (%u)\n",contig._name.c_str(), _qname.c_str(), _rb, _re, clen); 
+        exit(1);
+    }
     //UIN32 qlen = _qae-_qab;
     //UINT32 alen = std::max(rlen,alen);
     auto nmp = bam_aux_get(hts_align,"NM");
@@ -500,7 +512,7 @@ void Alignment::prepare_short_arm(const UINT k, const UINT32 windex, const UINT3
 
 
 void Alignment::initialise_pos(const bam1_t *hts_align) {
-    _qname = std::string(bam_get_qname(hts_align), hts_align->core.l_qname);
+    //_qname = std::string(bam_get_qname(hts_align), hts_align->core.l_qname);
     _rb = hts_align->core.pos;
     _qab = 0;
     // Get ending pos and update _qab (if soft-clipped)

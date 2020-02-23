@@ -109,6 +109,7 @@ void Hypo::polish() {
     if (_contigs.size()%_contig_batch_size!=0) {
         ++num_batches;
     }
+    fprintf(stdout, "[Hypo::Hypo] Info: Number.of contigs: %lu; Number of batches: %u\n",_contigs.size(),num_batches);
     _sf_short = sam_open(_cFlags.sr_bam_filename.c_str(), "r");
     _sam_header_short = sam_hdr_read(_sf_short);
     _hts_align_short = bam_init1();
@@ -298,12 +299,17 @@ void Hypo::create_alignments(bool is_sr, UINT32 batch_id) {
         if (hts_align->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP)) {continue;}
         // Ignore if mapping quality <=1
         if (hts_align->core.qual < mq) {continue;}
-        UINT32 cid = _cname_to_id[std::string(sam_hdr_tid2name(sam_header,hts_align->core.tid))];
+        std::string cname(sam_hdr_tid2name(sam_header,hts_align->core.tid));
+        if (_cname_to_id.find(cname) == _cname_to_id.end()) {
+            fprintf(stderr, "[Hypo::Hypo] Error: Alignment File error: Contig-reference (%s) does not exist in the draft!\n",cname.c_str());
+            exit(1);
+        }
+        UINT32 cid = _cname_to_id[cname];
         if (is_sr) {  // short reads     
-            _alignment_store[cid].emplace_back(std::make_unique<Alignment>(hts_align));
+            _alignment_store[cid].emplace_back(std::make_unique<Alignment>(*(_contigs[cid]), hts_align));
         }
         else { // long reads
-            _alignment_store[cid].emplace_back(std::make_unique<Alignment>(_cFlags.norm_edit_th, hts_align));
+            _alignment_store[cid].emplace_back(std::make_unique<Alignment>(*(_contigs[cid]), _cFlags.norm_edit_th, hts_align));
         }
         if (!((_alignment_store[cid].back())->is_valid)) {
             _alignment_store[cid].pop_back();

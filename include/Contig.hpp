@@ -130,6 +130,7 @@ public:
 private:
     const UINT32 _id;
     const std::string _name;
+    const UINT32 _len;
     PackedSeq<4> _pseq;
 
     // Created by find_solid_pos; Will be used for finding SR; Will be discarded after that
