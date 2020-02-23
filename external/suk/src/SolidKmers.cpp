@@ -151,12 +151,12 @@ bool SolidKmers::initialise(const std::vector<std::string> & filenames, const UI
     monitor.stop("[SUK:KMC]: Kmers Histogram done. ");     
     
     /* Find cut offs */
-    monitor.start();
+    //monitor.start();
     CutOffs coffs = find_cutoffs(histArray);
-    monitor.stop("[SUK]: Finding cutoffs. ");
+    //monitor.stop("[SUK]: Finding cutoffs. ");
     
     // set bit-vector
-    monitor.start();
+    //monitor.start();
     UINT64 shift = 2 * (_k - 1);
     UINT64 mask = (1ULL<<2*_k) - 1;
     if(!kmc_database.RestartListing()) {
@@ -188,9 +188,9 @@ bool SolidKmers::initialise(const std::vector<std::string> & filenames, const UI
             }
         }
     }
-    monitor.stop("[SUK]: Filling bitvectors. ");
+    //monitor.stop("[SUK]: Filling bitvectors. ");
 
-    monitor.start();
+    //monitor.start();
     kmc_inputs_path = kmc_inputs_path.substr(1);
     std::string kmc_output_path_pre = kmc_output_path + ".kmc_pre";
     std::string kmc_output_path_suf = kmc_output_path + ".kmc_suf";
@@ -198,7 +198,7 @@ bool SolidKmers::initialise(const std::vector<std::string> & filenames, const UI
     //unlink(kmc_output_path_pre.c_str());
     //unlink(kmc_output_path_suf.c_str());
     rmdir(tmp_kmc_directory.c_str());
-    monitor.stop("[SUK]: Clearing files. ");
+    //monitor.stop("[SUK]: Clearing files. ");
 
     
     fprintf(stdout, "[SolidKmers] Info: Number of solid kmers found: %lu\n",sdsl::bit_vector::rank_1_type(&_bv)(_bv.size())); 
@@ -283,13 +283,17 @@ CutOffs SolidKmers::find_cutoffs(const std::vector<size_t> & histArray) {
     const int cMax_lookup = 5;
     int bind = coffs.mean-1; // ind pvs to mean
     int eind = err_th;
+    // initialise
+    coffs.lower = UINT(eind);
     UINT count_ge = 0;
     UINT count_lower = 0;
     for(ind = bind; ind >= eind; --ind) {
         count_ge = 0; count_lower = 0;
         for(int ind2 = ind - 1; ind2 >= (ind - cMax_lookup) && ind2 >= eind; --ind2) {
-            if(histArray[ind2] < histArray[ind]) {count_lower++;}
-            else {count_ge++;}
+            if(histArray[ind2] < histArray[ind]) {
+                ++count_lower;
+            }
+            else {++count_ge;}
         }
         if(count_ge >= count_lower) {
             coffs.lower = UINT(ind);
@@ -300,15 +304,54 @@ CutOffs SolidKmers::find_cutoffs(const std::vector<size_t> & histArray) {
     // Find upper cut-off by scanning on the right of maxima for a freq after which most values (of nxt 5) are higher
     bind = coffs.mean+1; // ind nxt to mean
     eind = std::min(bind + 2*(coffs.mean-coffs.lower),UINT(len));
+    // initialise
+    coffs.upper = UINT(eind);
+    // See if this plan works
+    bool plan_a = false;
     for(ind = bind; ind < eind; ++ind) {
-        count_ge = 0; count_lower = 0;
-        for(int ind2 = ind + 1; ind2 <= ind + cMax_lookup && ind2 < len; ++ind2) {
-            if(histArray[ind2] < histArray[ind]) {++count_lower;}
+        count_lower = 0; count_ge = 0;
+        for(UINT ind2 = ind + 1; ind2 <= ind + cMax_lookup && ind2 < len; ++ind2) {
+            if(histArray[ind2] < histArray[ind]) {
+                ++count_lower;                
+            }
             else {++count_ge;}
         }
         if(count_ge >= count_lower) {
-           coffs.upper = UINT(ind);
+            coffs.upper = UINT(ind);
+            plan_a = true;
             break;
+        }
+    }
+
+    // Plan B: Vector of delta_avg for cases where upper threshold could not be set by this approach;
+    // Stores avg delta % (delta is difference between current count and the counts in a window of next 5 which are lower than current)
+    if (!plan_a){
+        std::vector<UINT> delta_avg(eind,0); 
+        for(ind = bind; ind < eind; ++ind) {
+            UINT delta_sum=0; 
+            count_lower = 0;
+            for(int ind2 = ind + 1; ind2 <= ind + cMax_lookup && ind2 < len; ++ind2) {
+                if(histArray[ind2] < histArray[ind]) {
+                    ++count_lower;
+                    delta_sum += (histArray[ind]-histArray[ind2]);
+                }                
+            }            
+            delta_avg[ind] = UINT((delta_sum*100)/(count_lower*histArray[ind]));            
+        }
+        // Look for the first minimum of moving window(starting from current) avg of delta_avg
+        float min_avg_avg_val = float(delta_avg[bind]);
+        for(ind = bind; ind < eind; ++ind) {
+            UINT window_len = std::min(cMax_lookup,eind-ind);
+            UINT avg_delta_sum = 0;
+            for(UINT ind2 = ind; ind2 < ind + window_len; ++ind2) {
+                avg_delta_sum += delta_avg[ind2];
+            }
+            float avg_avg_val = float(avg_delta_sum)/float(window_len);
+            // If lower than minimum so far, this is the new value
+            if (avg_avg_val < min_avg_avg_val) {
+                min_avg_avg_val = avg_avg_val;
+                coffs.upper = UINT(ind);
+            }
         }
     }
 

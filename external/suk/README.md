@@ -153,6 +153,7 @@ A **homopolymer** is a sequence consisting of the same letter repeated multiple 
   + Next, it finds out the global-maxima. The frequency at the global-maxima will be taken as the mean-coverage.
   + Next, it computes the lower cut-off by scanning on the left of maxima in a look-forward sliding window fashion: Lower cut-off will be a frequency where the number of kmers is lower than most of those with frequency in an adjacent window (of size 5).
   + Finally, the upper threshold is determined in the same fashion as that of the lower-threshold but on the right-side of the global maxima.
+    * There may be some cases where the upper threshold could not be determined in this fashion (because of no uphill curve after maxma); Plan B for such cases is to find the first platue; it works as follows: For every point take average of change (%) from the current value in a window of next 5 values (considering only decreased values). Run moving average (considering a window of size 5) on this range and take the frequency corresponding to the first minimum moving average.
 - Lastly, it sets the bits corresponding to all kmers (computed by ntHits) that have frequency <=upper-threshold.
   + Before setting, it checks whether the kmer has HomoPolymer ends (the first and second bases are the same or the last and the second last bases are the same). It does not include kmer which has Homopolymer ends, if exclude-homopolymer filter is on (using `--exclude-hp` or `-e`).
 

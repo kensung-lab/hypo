@@ -21,9 +21,9 @@ option(suk_build_executable "Build suk standalone tool" ON)
 option(optimise_for_native "Build with -march=native" OFF)
 
 if(optimise_for_native)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3 -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-missing-braces -pedantic -O3 -march=native")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-missing-braces -pedantic -O3")
 endif()
 
 # build SUK as a static library by default
